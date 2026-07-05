@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard Monitoring Akuarium Kelompok 8</title>
+    <link rel="stylesheet" href="../assets/css/fishcare.css">
+</head>
+<body>
+
+<div class="main-container">
+    
+    <div id="alert-container"></div>
+
+    <div class="dashboard-title">
+        <h2>Sistem Proteksi Ikan - IoT Kelompok 8</h2>
+        <p>Monitoring Real-Time Sensor Air & Suhu via ThingSpeak & Local ESP32 API</p>
+    </div>
+
+    <div class="row-pusat">
+        <div style="width: 100%; max-width: 600px;">
+            <div class="kartu-monitor-pompa">
+                <h5>Mesin Keputusan & Sistem Pompa</h5>
+                
+                <div class="debit-box-wrapper">
+                    <div class="debit-kolom border-kanan">
+                        <span>Debit Air Aktual</span>
+                        <strong id="local-flow">-- L/min</strong>
+                    </div>
+                    <div class="debit-kolom">
+                        <span>Delta Perubahan</span>
+                        <strong id="local-delta">-- L/min</strong>
+                    </div>
+                </div>
+
+                <div class="ml-box-alert">
+                    <span>Prediksi Machine Learning</span>
+                    <h4 id="ml-status" style="color: #6c757d;">MEMUAT DATA...</h4>
+                </div>
+
+                <div class="wrapper-tombol" id="pump-control-wrapper">
+                    <button class="btn-aksi-pompa" disabled>Menghubungkan ke Alat...</button>
+                </div>
+                    
+            </div>
+        </div>
+    </div>
+    
+    <div class="grid-sensor">
+        <div class="kartu-monitor">
+            <h5>Suhu Air</h5>
+            <div id="temp-value" class="angka-sensor text-danger">--</div>
+            <p class="status-text">Status Keadaan: <span id="temp-status" class="lencana bg-secondary">Memuat...</span></p>
+        </div>
+
+        <div class="kartu-monitor">
+            <h5>Water Level (ADC)</h5>
+            <div id="water-value" class="angka-sensor text-primary">--</div>
+            <p class="status-text">Kondisi Volume: <span id="water-status" class="lencana bg-secondary">Memuat...</span></p>
+        </div>
+    </div>
+
+    <div class="footer-sync">
+        <small>
+             Cloud Sync: <span id="last-update" class="fw-bold text-dark">--</span>
+        </small>
+    </div>
+</div>
+
+<script>
+    // =======================================================
+    // LOGIC JAVASCRIPT - PURE AJAX FETCH
+    // =======================================================
+    const CHANNEL_ID = '3398220';
+    const READ_API_KEY = '7SSRWVA2QHH21H2K';
+    const TS_URL = `https://api.thingspeak.com/channels/${CHANNEL_ID}/feeds/last.json?api_key=${READ_API_KEY}`;
+    
+    const ESP32_IP = "192.168.1.142"; 
+    const ESP_URL = `http://${ESP32_IP}/api/status`;
+
+    // 1. Ambil Data dari Cloud ThingSpeak (Interval 15 Detik)
+    function updateCloudData() {
+        fetch(TS_URL)
+            .then(response => response.json())
+            .then(data => {
+                const suhu = parseFloat(data.field1);
+                const water = parseInt(data.field2);
+                const statusSuhu = data.field3; 
+                const timestamp = new Date(data.created_at).toLocaleString('id-ID', { timeZone: 'Asia/Jakarta' });
+
+                document.getElementById('temp-value').innerText = isNaN(suhu) || suhu === -999 ? "ERR" : suhu.toFixed(1) + " °C";
+                document.getElementById('water-value').innerText = isNaN(water) ? "--" : water;
+                document.getElementById('last-update').innerText = timestamp;
+
+                const tempBadge = document.getElementById('temp-status');
+                tempBadge.innerText = statusSuhu ? statusSuhu : "--";
+                if (statusSuhu === "HOT")          tempBadge.className = "lencana bg-danger";
+                else if (statusSuhu === "COLD")    tempBadge.className = "lencana bg-info";
+                else if (statusSuhu === "NORMAL")  tempBadge.className = "lencana bg-success";
+                else                               tempBadge.className = "lencana bg-secondary";
+
+                const waterBadge = document.getElementById('water-status');
+                if (water > 1500) {
+                    waterBadge.className = "lencana bg-success";
+                    waterBadge.innerText = "NORMAL";
+                } else if (water > 500) {
+                    waterBadge.className = "lencana bg-warning";
+                    waterBadge.innerText = "WARNING";
+                } else {
+                    waterBadge.className = "lencana bg-danger";
+                    waterBadge.innerText = "LOW WATER";
+                }
+
+                const alertContainer = document.getElementById('alert-container');
+                if (water <= 500) {
+                    alertContainer.innerHTML = `
+                        <div class="spanduk-alert spanduk-danger">
+                             BAHAYA KEBOCORAN: Volume Air Sangat Kritis (${water} ADC)! Segera isi ulang akuarium!
+                        </div>`;
+                } else if (statusSuhu === "HOT") {
+                    alertContainer.innerHTML = `
+                        <div class="spanduk-alert spanduk-warning">
+                             PERINGATAN SUHU: Air Akuarium Terlalu Panas (${suhu.toFixed(1)} °C)! Periksa lingkungan akuarium!
+                        </div>`;
+                } else {
+                    alertContainer.innerHTML = "";
+                }
+            })
+            .catch(err => console.error("Koneksi API ThingSpeak Terputus:", err));
+    }
+
+    // 2. Ambil Data dari Local ESP32 API (Interval 1 Detik untuk Fast Control)
+    function updateLocalESPData() {
+        fetch(ESP_URL)
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('local-flow').innerText = data.flowRate.toFixed(2) + " L/min";
+                document.getElementById('local-delta').innerText = data.deltaFlow.toFixed(2) + " L/min";
+                
+                const mlStatus = document.getElementById('ml-status');
+                const btnWrapper = document.getElementById('pump-control-wrapper');
+                
+                if (data.isPumpOff) {
+                    mlStatus.innerText = "CRITICAL ERROR & SHUTDOWN";
+                    mlStatus.style.color = "#dc3545";
+                    btnWrapper.innerHTML = `<button onclick="sendPumpCommand('nyalakan')" class="btn-aksi-pompa btn-success-custom">RESET & NYALAKAN POMPA</button>`;
+                } else {
+                    if (data.prediksiML === 0) {
+                        mlStatus.innerText = "NORMAL";
+                        mlStatus.style.color = "#198754";
+                    } else if (data.prediksiML === 1) {
+                        mlStatus.innerText = "POMPA MACET DETECTED";
+                        mlStatus.style.color = "#dc3545";
+                    } else if (data.prediksiML === 2) {
+                        mlStatus.innerText = "ANOMALI / INDIKASI GEJALA BOCOR";
+                        mlStatus.style.color = "#ffc107";
+                    }
+                    btnWrapper.innerHTML = `<button onclick="sendPumpCommand('matikan')" class="btn-aksi-pompa btn-danger-custom">PAKSA MATIKAN MANUAL</button>`;
+                }
+            })
+            .catch(err => {
+                console.error("Gagal terhubung ke ESP32 lokal:", err);
+                const mlStatus = document.getElementById('ml-status');
+                mlStatus.innerText = "OFFLINE (ALAT TIDAK DIJANGKAU)";
+                mlStatus.style.color = "#6c757d";
+                document.getElementById('pump-control-wrapper').innerHTML = `<button class="btn-aksi-pompa" disabled>Pastikan HP/Laptop Satu Wi-Fi dengan ESP32</button>`;
+            });
+    }
+
+    // Kirim Perintah On/Off Pompa
+    function sendPumpCommand(action) {
+        fetch(`http://${ESP32_IP}/action_${action}`)
+            .then(() => {
+                setTimeout(updateLocalESPData, 500);
+            })
+            .catch(err => alert("Gagal mengirim perintah kendali: " + err));
+    }
+
+    // Jalankan Loop Real-time
+    updateCloudData();
+    updateLocalESPData();
+    setInterval(updateCloudData, 15000);
+    setInterval(updateLocalESPData, 1000); 
+</script>
+</body>
+</html>

@@ -1,0 +1,260 @@
+/* =========================================================================
+   MURNI CSS MODERN - MONITORING AKUARIUM KELOMPOK 8 (TANPA BOOTSTRAP)
+   ========================================================================= */
+
+/* Reset & Base Typography */
+* {
+    box-sizing: border-box;
+}
+
+body { 
+    background-color: #f4f6f9; 
+    padding: 40px 20px;
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; 
+    margin: 0;
+    color: #333;
+}
+
+/* Container Utama */
+.main-container {
+    max-width: 850px;
+    margin: 0 auto;
+}
+
+/* Judul Atas Dashboard */
+.dashboard-title {
+    text-align: center;
+    margin-bottom: 2.5rem;
+}
+
+.dashboard-title h2 {
+    font-size: 2rem;
+    font-weight: 800; 
+    color: #2c3e50; 
+    text-transform: uppercase; 
+    letter-spacing: 0.5px;
+    margin: 0 0 8px 0;
+}
+
+.dashboard-title p {
+    color: #7f8c8d;
+    margin: 0;
+    font-size: 0.95rem;
+}
+
+/* Layout Wrapper Gunting Jaringan (Flexbox) */
+.row-pusat {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 24px;
+}
+
+/* Grid Dua Kolom untuk Sensor Suhu & Water Level */
+.grid-sensor {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+    margin-bottom: 24px;
+}
+
+/* Responsif untuk Layar HP / Kecil */
+@media (max-width: 768px) {
+    .grid-sensor {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* Desain Kotak Kartu Putih Modern */
+.kartu-monitor, .kartu-monitor-pompa {
+    background-color: #ffffff;
+    padding: 30px;
+    border-radius: 16px; 
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05); 
+    transition: transform 0.3s ease;
+    width: 100%;
+}
+.kartu-monitor-pompa {
+    padding: 30px;
+}
+
+.kartu-monitor:hover { 
+    transform: translateY(-4px); 
+}
+
+.kartu-monitor, .kartu-monitor-pompa h5 {
+    color: #95a5a6;
+    text-transform: uppercase;
+    font-size: 0.85rem;
+    font-weight: 700;
+    letter-spacing: 0.8px;
+    margin-top: 0;
+    margin-bottom: 25px;
+    text-align: center;
+}
+
+/* Layout Nilai Debit Air */
+.debit-box-wrapper {
+    display: flex;
+    text-align: center;
+    margin-bottom: 25px;
+    background: #f8f9fa;
+    padding: 15px;
+    border-radius: 12px;
+}
+
+.debit-kolom {
+    flex: 1;
+}
+
+.border-kanan {
+    border-right: 1px solid #e2e8f0;
+}
+
+.debit-kolom span {
+    color: #7f8c8d;
+    display: block;
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    font-weight: 600;
+}
+
+.debit-kolom strong {
+    font-size: 1.6rem;
+    color: #2c3e50;
+    display: block;
+    margin-top: 5px;
+}
+
+/* Teks Nilai Angka Sensor Besar */
+.angka-sensor { 
+    font-size: 3rem; 
+    font-weight: 700; 
+    margin: 15px 0; 
+    text-align: center;
+}
+
+.text-danger { color: #e74c3c; }
+.text-primary { color: #3498db; }
+
+.status-text {
+    margin: 0;
+    text-align: center;
+    color: #4f5d75;
+    font-weight: 500;
+}
+
+/* Desain Badge / Lencana Status */
+.lencana {
+    display: inline-block;
+    padding: 5px 12px;
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: #fff;
+    border-radius: 6px;
+    margin-left: 5px;
+    text-transform: uppercase;
+}
+
+.bg-secondary { background-color: #95a5a6; }
+.bg-success { background-color: #2ecc71; }
+.bg-danger { background-color: #e74c3c; }
+.bg-warning { background-color: #f1c40f; color: #333; }
+.bg-info { background-color: #3498db; }
+
+/* Box Status Machine Learning */
+.ml-box-alert {
+    background-color: #f4f6f7;
+    text-align: center;
+    border: 1px solid #e2e8f0;
+    margin-bottom: 25px;
+    padding: 20px;
+    border-radius: 12px;
+}
+
+.ml-box-alert span {
+    display: block;
+    color: #7f8c8d;
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+}
+
+.ml-box-alert h4 {
+    margin: 8px 0 0 0;
+    font-weight: 800;
+    font-size: 1.4rem;
+    letter-spacing: 0.5px;
+}
+
+/* Desain Tombol Kendali Pompa Modern */
+.wrapper-tombol {
+    display: flex;
+    justify-content: center;
+}
+
+.btn-aksi-pompa { 
+    width: 100%;
+    padding: 14px 30px; 
+    font-weight: 700; 
+    font-size: 0.95rem;
+    border-radius: 12px; 
+    border: none;
+    cursor: pointer;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    transition: all 0.2s ease;
+}
+
+.btn-aksi-pompa:disabled {
+    background-color: #bdc3c7;
+    color: #ffffff;
+    cursor: not-allowed;
+}
+
+.btn-danger-custom { 
+    background-color: #e74c3c; 
+    color: white;
+    box-shadow: 0 4px 15px rgba(231, 76, 60, 0.3);
+}
+.btn-danger-custom:hover { 
+    background-color: #c0392b; 
+}
+
+.btn-success-custom { 
+    background-color: #2ecc71; 
+    color: white;
+    box-shadow: 0 4px 15px rgba(46, 204, 113, 0.3);
+}
+.btn-success-custom:hover { 
+    background-color: #27ae60; 
+}
+
+/* Spanduk Peringatan Darurat Atas */
+.spanduk-alert {
+    padding: 15px 20px;
+    margin-bottom: 24px;
+    border-radius: 12px;
+    text-align: center;
+    font-weight: 700;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.03);
+}
+.spanduk-danger { background-color: #fadbd8; color: #78281f; border: 1px solid #f5b7b1; }
+.spanduk-warning { background-color: #fef9e7; color: #7d6608; border: 1px solid #f9e79f; }
+
+/* Footer Sinkronisasi */
+.footer-sync {
+    text-align: center;
+    margin-top: 35px;
+}
+
+.footer-sync small {
+    color: #7f8c8d;
+    background-color: #ffffff;
+    padding: 10px 20px;
+    border-radius: 30px;
+    font-weight: 600;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.04);
+}
+.fw-bold { font-weight: 700; }
+.text-dark { color: #2c3e50; }
